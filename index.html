@@ -961,7 +961,7 @@ async function runAnalysis() {
             reject(err);
           } else if (didTimeOut) {
             clearInterval(pollId);
-            const err = new Error('Request timed out after 60 seconds.');
+            const err = new Error('Request timed out after 120 seconds.');
             err.name = 'TimeoutError';
             reject(err);
           }
