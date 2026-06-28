@@ -206,13 +206,30 @@
 
   .dir-meta { font-size: 12px; color: var(--text2); line-height: 1.6; white-space: pre-line; }
 
-  /* score bars */
-  .scores-grid { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
-  .score-item { display: flex; align-items: center; gap: 8px; }
-  .score-name { font-size: 10px; color: var(--text2); width: 110px; flex-shrink: 0; text-transform: uppercase; letter-spacing: 0.04em; }
-  .score-track { flex: 1; height: 5px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
-  .score-fill { height: 100%; border-radius: 3px; transition: width 1s ease; }
-  .score-num { font-size: 10px; color: var(--text2); width: 24px; text-align: right; }
+  /* momentum bar */
+  .momentum-wrap { margin-bottom: 14px; }
+  .momentum-label-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
+  .momentum-title { font-size: 10px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.08em; }
+  .momentum-val { font-size: 13px; font-weight: 700; font-family: monospace; }
+  .momentum-val.up { color: var(--green); }
+  .momentum-val.down { color: var(--red); }
+  .momentum-val.flat { color: var(--amber); }
+  .momentum-track {
+    height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden;
+    position: relative;
+  }
+  .momentum-fill {
+    position: absolute; top: 0; height: 100%; border-radius: 3px;
+    transition: width 1s ease, left 1s ease;
+  }
+  .momentum-fill.up { background: var(--green); left: 50%; }
+  .momentum-fill.down { background: var(--red); right: 50%; left: auto; }
+  .momentum-fill.flat { background: var(--amber); left: 50%; width: 2px !important; }
+  .momentum-track-mid {
+    position: absolute; top: 0; left: 50%; width: 1px; height: 100%;
+    background: rgba(255,255,255,0.12);
+  }
+  .momentum-sub { font-size: 10px; color: var(--text3); margin-top: 4px; letter-spacing: 0.03em; }
 
   /* price table */
   .price-zones { margin-bottom: 14px; }
@@ -290,17 +307,23 @@
     white-space: pre-wrap;
   }
 
-  /* events */
-  .events { margin-bottom: 0; }
-  .ev-item { display: flex; gap: 10px; padding: 6px 0; border-bottom: 0.5px solid rgba(255,255,255,0.04); }
-  .ev-item:last-child { border-bottom: none; }
-  .ev-date { font-size: 10px; color: var(--gold-dim); min-width: 64px; padding-top: 1px; }
-  .ev-info { }
-  .ev-name { font-size: 11px; color: var(--text); }
-  .ev-note { font-size: 10px; color: var(--text2); margin-top: 1px; }
-  .ev-impact { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
-  .impact-high { background: var(--red); }
-  .impact-med { background: var(--amber); }
+  /* methodology note */
+  .methodology-note {
+    margin-bottom: 12px;
+    padding: 10px 13px;
+    border-radius: 8px;
+    background: var(--bg3);
+    border: 0.5px solid var(--border);
+  }
+  .methodology-note-title {
+    font-size: 9px; color: var(--gold-dim); text-transform: uppercase;
+    letter-spacing: 0.1em; margin-bottom: 5px;
+  }
+  .methodology-note-body {
+    font-size: 10.5px; color: var(--text3); line-height: 1.65;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  .methodology-note-body span { color: var(--text2); }
 
   /* error */
   .error-box {
@@ -320,6 +343,83 @@
     color: var(--text); font-size: 11px; cursor: pointer; font-family: inherit;
   }
   .retry-btn:hover { background: rgba(224,82,82,0.25); }
+
+  /* ---- API KEY SETUP SCREEN ---- */
+  .setup-screen {
+    position: fixed; inset: 0; z-index: 100;
+    background: var(--bg);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 24px 20px;
+  }
+  .setup-screen.hide { display: none; }
+  .setup-logo {
+    width: 52px; height: 52px;
+    background: linear-gradient(135deg, #C9952A, #F5C842);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 700; color: #000;
+    margin-bottom: 20px;
+  }
+  .setup-title {
+    font-size: 16px; font-weight: 700; color: var(--text);
+    margin-bottom: 6px; text-align: center; letter-spacing: 0.02em;
+  }
+  .setup-sub {
+    font-size: 12px; color: var(--text2); text-align: center;
+    line-height: 1.6; max-width: 320px; margin-bottom: 24px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  .setup-box {
+    width: 100%; max-width: 360px;
+    background: var(--bg2); border: 0.5px solid var(--border-bright);
+    border-radius: var(--radius); padding: 20px;
+  }
+  .setup-field-label {
+    font-size: 10px; color: var(--text2); letter-spacing: 0.08em;
+    text-transform: uppercase; margin-bottom: 6px;
+  }
+  .setup-input {
+    width: 100%; background: var(--bg3); border: 0.5px solid var(--border);
+    border-radius: 7px; padding: 10px 12px; color: var(--text);
+    font-size: 12px; font-family: monospace; outline: none;
+    margin-bottom: 14px; letter-spacing: 0.02em;
+  }
+  .setup-input:focus { border-color: var(--gold); }
+  .setup-input::placeholder { color: var(--text3); }
+  .setup-submit {
+    width: 100%; padding: 11px; border-radius: 8px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    color: #000; font-weight: 700; font-size: 13px;
+    border: none; cursor: pointer; font-family: inherit; letter-spacing: 0.04em;
+  }
+  .setup-submit:hover { opacity: 0.9; }
+  .setup-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+  .setup-error {
+    font-size: 11px; color: var(--red); margin-top: 10px;
+    text-align: center; display: none; line-height: 1.5;
+    font-family: -apple-system, sans-serif;
+  }
+  .setup-error.show { display: block; }
+  .setup-note {
+    font-size: 10px; color: var(--text3); text-align: center;
+    margin-top: 14px; line-height: 1.6; max-width: 320px;
+    font-family: -apple-system, sans-serif;
+  }
+  .setup-note a { color: var(--gold-dim); }
+  .setup-link {
+    font-size: 10px; color: var(--text3); text-align: center;
+    margin-top: 10px; line-height: 1.6;
+    font-family: -apple-system, sans-serif;
+  }
+  /* key indicator in header */
+  .key-pill {
+    font-size: 9px; padding: 3px 8px; border-radius: 20px;
+    border: 0.5px solid var(--border); color: var(--text3);
+    letter-spacing: 0.04em; cursor: pointer; white-space: nowrap;
+    background: var(--bg3);
+  }
+  .key-pill:hover { border-color: var(--gold-dim); color: var(--text2); }
+  .key-pill.set { border-color: rgba(82,183,136,0.3); color: var(--green); }
 
   /* disclaimer */
   .disclaimer {
@@ -350,6 +450,24 @@
 </head>
 <body>
 
+<!-- API KEY SETUP SCREEN -->
+<div class="setup-screen" id="setupScreen">
+  <div class="setup-logo">Au</div>
+  <div class="setup-title">Gold Analyzer — Setup</div>
+  <div class="setup-sub">Enter your Anthropic API key to get started. It stays in your browser only — never sent to any server except Anthropic directly.</div>
+  <div class="setup-box">
+    <div class="setup-field-label">Anthropic API Key</div>
+    <input class="setup-input" id="setupKeyInput" type="password" placeholder="sk-ant-api03-…" autocomplete="off" spellcheck="false" />
+    <button class="setup-submit" id="setupSubmit" onclick="saveApiKey()">Save &amp; Start Analyzing</button>
+    <div class="setup-error" id="setupError"></div>
+  </div>
+  <div class="setup-note">
+    Get a free key at <a href="https://console.anthropic.com/settings/keys" target="_blank">console.anthropic.com</a><br>
+    Each analysis costs ~$0.02–0.04 from your own account.<br>
+    Your key is stored locally and never shared.
+  </div>
+</div>
+
 <div class="top-bar">
   <div class="logo">
     <div class="logo-icon">Au</div>
@@ -360,6 +478,7 @@
   </div>
   <div class="top-bar-right">
     <button class="lang-toggle" id="langToggle" onclick="toggleLang()" aria-label="Toggle language">EN / ខ្មែរ</button>
+    <button class="key-pill" id="keyPill" onclick="showSetup()" title="Change API key">🔑 API KEY</button>
     <div class="time-display">
       <span id="clock">--:--:-- UTC</span>
       <span id="datedisp">-- --- ----</span>
@@ -418,7 +537,17 @@
       <div class="dir-meta" id="dirMeta">Analyzing…</div>
     </div>
 
-    <div class="scores-grid" id="scoresGrid"></div>
+    <div class="momentum-wrap" id="momentumWrap">
+      <div class="momentum-label-row">
+        <span class="momentum-title" id="momentumTitle">Session Momentum</span>
+        <span class="momentum-val flat" id="momentumVal">—</span>
+      </div>
+      <div class="momentum-track">
+        <div class="momentum-track-mid"></div>
+        <div class="momentum-fill flat" id="momentumFill" style="width:2px"></div>
+      </div>
+      <div class="momentum-sub" id="momentumSub">vs. session open</div>
+    </div>
 
     <div class="price-zones" id="priceZones">
       <div class="zone-title" id="zonesTitle">Key price zones</div>
@@ -434,8 +563,16 @@
 
     <div class="scenarios" id="scenariosBox"></div>
 
-    <div class="zone-title" id="eventsTitle" style="margin-bottom:6px">Economic events this week</div>
-    <div class="events" id="eventsList"></div>
+    <div class="methodology-note" id="methodologyNote">
+      <div class="methodology-note-title" id="methodologyNoteTitle">How this analysis was calculated</div>
+      <div class="methodology-note-body" id="methodologyNoteBody">
+        <span>Direction (UP/DOWN/NEUTRAL)</span> — price vs. session open (00:00 UTC).<br>
+        <span>Momentum bar</span> — % change from session open; capped at ±2% for display scale.<br>
+        <span>Zones</span> — session open, high, and low, plus nearest round-number levels.<br>
+        <span>Trade setup</span> — entry within 0.3% of zone; SL beyond zone; TP at 1:3+ RR.<br>
+        <span>Bull/Bear scenarios</span> — triggered by break of session high or low respectively.
+      </div>
+    </div>
 
     <div class="analysis-text" id="analysisText"></div>
   </div>
@@ -487,8 +624,6 @@ const UI_STRINGS = {
   km: {
     tradeSetupTitle: 'ចំណុចចូល / ចំណេញ / ដាក់ខាត — ៥ នាទី & ១៥ នាទី',
     keyZones: 'តំបន់តម្លៃសំខាន់ៗ',
-    events: 'ព្រឹត្តិការណ៍សេដ្ឋកិច្ចសប្តាហ៍នេះ',
-    noEvents: 'មិនមានព្រឹត្តិការណ៍ធំសម្រាប់រយៈពេលនេះទេ។',
     entry: 'ចំណុចចូល', stop: 'ដាក់ខាត', tp1: 'គោលដៅទី ១', tp2: 'គោលដៅទី ២',
     buyNow: 'ទិញឥឡូវនេះ', sellNow: 'លក់ឥឡូវនេះ', wait: 'រង់ចាំ',
   }
@@ -538,14 +673,13 @@ function buildPrompt() {
 Today is ${humanDate} (UTC).
 
 Please search the web for the latest data on these GOLD DIRECTION signals:
-1. Current XAU/USD price and recent movement
+1. Current XAU/USD price and recent movement (include today's session open price if available)
 2. DXY (US Dollar Index) latest level and trend
 3. Fed interest rate expectations / probability of rate hike
 4. VIX fear index current level
 5. Bitcoin price and crypto market sentiment
 6. Geopolitical risks (Middle East, Iran, etc) affecting gold
-7. Key upcoming economic events this week (NFP, PMI, CPI etc)
-8. Gold technical analysis on the 5-minute and 15-minute charts — recent swing highs/lows, nearest intraday support/resistance, and current short-term momentum
+7. Gold technical analysis on the 5-minute and 15-minute charts — recent swing highs/lows, nearest intraday support/resistance, and current short-term momentum
 
 After searching, respond ONLY with a valid JSON object (no markdown, no backticks, no extra text) in exactly this format:
 
@@ -591,13 +725,6 @@ After searching, respond ONLY with a valid JSON object (no markdown, no backtick
     "tp2":"$4,493",
     "when":"Thu–Fri"
   },
-  "events": [
-    {"date":"Mon","name":"PMI Manufacturing","note":"Weak = gold support","note_km":"ខ្សោយ = ល្អសម្រាប់មាស","impact":"high"},
-    {"date":"Tue","name":"JOLTS Job Openings","note":"Labor market gauge","note_km":"ឧបករណ៍វាស់ទីផ្សារការងារ","impact":"med"},
-    {"date":"Wed","name":"ADP + Services PMI","note":"Signals NFP direction","note_km":"ជាសញ្ញាបង្ហាញទិសដៅ NFP","impact":"med"},
-    {"date":"Thu","name":"Non-Farm Payrolls (NFP)","note":"Main gold catalyst this week","note_km":"កត្តាជំរុញមាសសំខាន់សប្តាហ៍នេះ","impact":"high"},
-    {"date":"All week","name":"Iran / Hormuz geopolitical risk","note":"Safe-haven floor for gold","note_km":"ជាគ្រឹះសុវត្ថិភាពសម្រាប់មាស","impact":"med"}
-  ],
   "tradeSetups": {
     "signalNow": "WAIT",
     "signalNowNote": "Price is mid-range on the 5m chart — no clean edge right now, wait for a retest of the levels below.",
@@ -627,9 +754,9 @@ After searching, respond ONLY with a valid JSON object (no markdown, no backtick
   "summary_km": "សរសេរការវិភាគជាភាសាខ្មែរ 3-4 ប្រយោគ ដោយពន្យល់ពីកត្តាចម្បង អ្វីដែលត្រូវតាមដាន និងហានិភ័យសំខាន់។"
 }
 
-Use the ACTUAL live data you find from web search. Update all prices, dates, and scores based on real current data. The score values (0-100) represent bullish bias: 0=very bearish, 100=very bullish. direction must be UP, DOWN, or NEUTRAL.
+Use the ACTUAL live data you find from web search. Update all prices and values based on real current data. "priceChange" should be the % change from today's session open (00:00 UTC) — format as e.g. "+0.82%" or "-1.14%". direction must be UP, DOWN, or NEUTRAL based on whether current price is above, below, or within 0.1% of session open.
 
-For "tradeSetups": signalNow must be one of "BUY NOW", "SELL NOW", or "WAIT" depending on whether there is a clean immediate edge on the 5m chart right now, or whether it's better to wait for a limit order at a specific level. entryType must be one of "MARKET BUY", "MARKET SELL", "LIMIT BUY", "LIMIT SELL". All "_km" fields (including each event's "note_km") must be natural, fluent Khmer (ភាសាខ្មែរ) translations of their English counterpart — not transliteration, not machine-literal word-for-word, but how a Khmer-speaking trader would naturally phrase it. Use real upcoming weekday names/dates for events based on today's actual date.`;
+For "tradeSetups": signalNow must be one of "BUY NOW", "SELL NOW", or "WAIT" depending on whether there is a clean immediate edge on the 5m chart right now, or whether it's better to wait for a limit order at a specific level. entryType must be one of "MARKET BUY", "MARKET SELL", "LIMIT BUY", "LIMIT SELL". All "_km" fields must be natural, fluent Khmer (ភាសាខ្មែរ) translations — not transliteration, not machine-literal word-for-word, but how a Khmer-speaking trader would naturally phrase it.`;
 }
 
 function cancelAnalysis() {
@@ -643,16 +770,90 @@ function cancelAnalysis() {
 }
 
 // ---------------------------------------------------------------
-// IMPORTANT — set this to your own backend URL before publishing.
-// This page calls a small backend you control (see
-// gold-analyzer-worker.js) instead of calling Anthropic directly,
-// because a public page can never safely hold an API key.
-// After deploying the Worker on Cloudflare, paste its URL here:
+// API KEY MANAGEMENT
+// Key is stored in localStorage — never leaves the browser except
+// in the Authorization header sent directly to Anthropic's API.
 // ---------------------------------------------------------------
-const BACKEND_URL = 'https://gold-analyzer.mahivsong.workers.dev/';
+const WORKER_URL = 'https://gold-analyzer.mahivsong.workers.dev/';
+
+function callWorker(messages) {
+  const apiKey = getStoredKey();
+  return fetch(WORKER_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(apiKey ? { 'X-User-Api-Key': apiKey } : {}),
+    },
+    body: JSON.stringify({ messages }),
+  });
+}
+
+function getStoredKey() {
+  try { return localStorage.getItem('ga_api_key') || ''; } catch(e) { return ''; }
+}
+function setStoredKey(k) {
+  try { localStorage.setItem('ga_api_key', k); } catch(e) {}
+}
+function clearStoredKey() {
+  try { localStorage.removeItem('ga_api_key'); } catch(e) {}
+}
+
+function showSetup() {
+  const screen = document.getElementById('setupScreen');
+  screen.classList.remove('hide');
+  const inp = document.getElementById('setupKeyInput');
+  inp.value = getStoredKey();
+  inp.focus();
+}
+
+function saveApiKey() {
+  const inp = document.getElementById('setupKeyInput');
+  const errEl = document.getElementById('setupError');
+  const btn = document.getElementById('setupSubmit');
+  const key = inp.value.trim();
+
+  if (!key.startsWith('sk-ant-')) {
+    errEl.textContent = 'That doesn\'t look like a valid Anthropic key (should start with sk-ant-).';
+    errEl.className = 'setup-error show';
+    return;
+  }
+  errEl.className = 'setup-error';
+  setStoredKey(key);
+  document.getElementById('setupScreen').classList.add('hide');
+  updateKeyPill();
+}
+
+function updateKeyPill() {
+  const pill = document.getElementById('keyPill');
+  const key = getStoredKey();
+  if (key) {
+    pill.className = 'key-pill set';
+    pill.title = 'API key set — click to change';
+    pill.textContent = '🔑 ' + key.slice(0, 10) + '…';
+  } else {
+    pill.className = 'key-pill';
+    pill.title = 'Set API key';
+    pill.textContent = '🔑 API KEY';
+  }
+}
+
+// Show setup screen on first visit (no key stored)
+(function initApiKey() {
+  if (!getStoredKey()) {
+    document.getElementById('setupScreen').classList.remove('hide');
+  } else {
+    document.getElementById('setupScreen').classList.add('hide');
+  }
+  updateKeyPill();
+
+  // Allow Enter key in input
+  document.getElementById('setupKeyInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') saveApiKey();
+  });
+})();
 
 let lastRunAt = 0;
-const RUN_COOLDOWN_MS = 20000; // don't allow a brand-new analysis more than once every 20s
+const RUN_COOLDOWN_MS = 20000;
 
 async function runAnalysis() {
   if (isRunning) return;
@@ -731,8 +932,8 @@ async function runAnalysis() {
   let didTimeOut = false;
   const timeoutId = setTimeout(() => { didTimeOut = true; }, 60000);
 
-  if (!BACKEND_URL || BACKEND_URL.includes('YOUR-WORKER-NAME')) {
-    clearTimeout(timeoutId);
+  const apiKey = getStoredKey();
+  if (!apiKey) {
     clearAllTimers();
     scanTicker.textContent = '';
     cancelLink.classList.remove('show');
@@ -743,56 +944,83 @@ async function runAnalysis() {
     btn.disabled = false;
     isRunning = false;
     resetDots();
-    errorBox.className = 'error-box show';
-    errorBox.innerHTML = `<strong>Not set up yet</strong><br>This page needs a backend URL configured before it can run. See the setup notes in gold-analyzer-worker.js.`;
+    showSetup();
     return;
   }
 
+  // Build initial messages array
+  let messages = [{ role: 'user', content: buildPrompt() }];
+
   try {
-    const fetchPromise = fetch(BACKEND_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt: buildPrompt() })
-    });
+    let finalData = null;
+    let loopCount = 0;
+    const MAX_LOOPS = 8;
 
-    // Poll for manual cancellation or timeout while the fetch is in flight.
-    const cancelOrTimeoutPromise = new Promise((_, reject) => {
-      const pollId = setInterval(() => {
-        if (wasManuallyCancelled) {
-          clearInterval(pollId);
-          const err = new Error('Cancelled by user.');
-          err.name = 'AbortError';
-          reject(err);
-        } else if (didTimeOut) {
-          clearInterval(pollId);
-          const err = new Error('Request timed out after 60 seconds with no response from the backend. Check that your Worker is deployed and reachable, and check the Worker logs in Cloudflare.');
-          err.name = 'TimeoutError';
-          reject(err);
+    while (loopCount < MAX_LOOPS) {
+      loopCount++;
+
+      const fetchPromise = callWorker(messages);
+
+      const cancelOrTimeoutPromise = new Promise((_, reject) => {
+        const pollId = setInterval(() => {
+          if (wasManuallyCancelled) {
+            clearInterval(pollId);
+            const err = new Error('Cancelled by user.');
+            err.name = 'AbortError';
+            reject(err);
+          } else if (didTimeOut) {
+            clearInterval(pollId);
+            const err = new Error('Request timed out after 60 seconds.');
+            err.name = 'TimeoutError';
+            reject(err);
+          }
+        }, 200);
+        fetchPromise.finally(() => clearInterval(pollId));
+      });
+
+      const response = await Promise.race([fetchPromise, cancelOrTimeoutPromise]);
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          clearStoredKey();
+          updateKeyPill();
+          showSetup();
+          document.getElementById('setupError').textContent = 'API key rejected. Please check and re-enter it.';
+          document.getElementById('setupError').className = 'setup-error show';
+          throw new Error('Invalid API key.');
         }
-      }, 200);
-      // Stop polling if the fetch itself settles first (best-effort cleanup)
-      fetchPromise.finally(() => clearInterval(pollId));
-    });
+        throw new Error(data.error?.message || ('Request failed (status ' + response.status + ')'));
+      }
 
-    const response = await Promise.race([fetchPromise, cancelOrTimeoutPromise]);
+      // If Claude used a tool (web search), loop: send tool results back
+      if (data.stop_reason === 'tool_use') {
+        messages.push({ role: 'assistant', content: data.content });
+        const toolResults = (data.content || [])
+          .filter(b => b.type === 'tool_use')
+          .map(b => ({ type: 'tool_result', tool_use_id: b.id, content: '' }));
+        messages.push({ role: 'user', content: toolResults });
+        continue; // next loop iteration
+      }
+
+      // Got final text response
+      finalData = data;
+      break;
+    }
 
     clearTimeout(timeoutId);
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error?.message || ('Request failed (status ' + response.status + ')'));
+    if (!finalData) {
+      throw new Error('No response received after tool loop. Try again.');
     }
 
-    // Extract text from response (Claude may use web search first, then reply with text)
+    // Extract text from final response
     let rawText = '';
-    if (Array.isArray(data.content)) {
-      for (const block of data.content) {
+    if (Array.isArray(finalData.content)) {
+      for (const block of finalData.content) {
         if (block.type === 'text') rawText += block.text;
       }
     }
-
-    if (!rawText.trim()) {
       throw new Error('No analysis text came back. Try again in a moment.');
     }
 
@@ -848,7 +1076,7 @@ async function runAnalysis() {
     } else if (wasTimeout) {
       message = err.message;
     } else if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
-      message = 'Could not reach the backend at all (network/CORS error). Check: (1) BACKEND_URL is correct and has no typo, (2) the Worker is deployed, (3) you are opening this page over http(s):// — not as a local file — if your browser blocks that. Open the browser console (F12) for the raw error: "' + err.message + '"';
+      message = 'Network error — could not reach Anthropic API. Check your internet connection and try again. (Console: "' + err.message + '")';
     } else {
       message = err.message || 'Something went wrong while analyzing gold.';
     }
@@ -881,11 +1109,6 @@ function parsePriceNum(str) {
   return (Math.min(...nums) + Math.max(...nums)) / 2;
 }
 
-function scoreColor(v) {
-  if (v >= 60) return '#52B788';
-  if (v >= 40) return '#E0A535';
-  return '#E05252';
-}
 
 function escapeHtml(str) {
   if (str === null || str === undefined) return '';
@@ -1045,19 +1268,70 @@ function renderResult(r) {
   }
   document.getElementById('dirMeta').textContent = [metaLine1, metaLine2].filter(Boolean).join('\n');
 
-  // Scores
-  const sg = document.getElementById('scoresGrid');
-  sg.innerHTML = '';
-  (Array.isArray(r.scores) ? r.scores : []).forEach(s => {
-    const value = clamp(s.value, 0, 100);
-    const color = s.color || scoreColor(value);
-    sg.innerHTML += `
-      <div class="score-item">
-        <div class="score-name">${escapeHtml(s.name)}</div>
-        <div class="score-track"><div class="score-fill" style="width:${value}%;background:${escapeHtml(color)}"></div></div>
-        <div class="score-num" style="color:${escapeHtml(color)}">${value}</div>
-      </div>`;
-  });
+  // Momentum bar — driven by priceChange (% or pts) vs session open
+  (function renderMomentum() {
+    const fill = document.getElementById('momentumFill');
+    const val = document.getElementById('momentumVal');
+    const sub = document.getElementById('momentumSub');
+    const title = document.getElementById('momentumTitle');
+
+    // Parse priceChange — accept formats like "+62", "-1.4%", "+1.52%", "62"
+    let pct = null;
+    const raw = String(r.priceChange || '').trim();
+    const pctMatch = raw.match(/([+-]?\d+\.?\d*)\s*%/);
+    const ptsMatch = raw.match(/([+-]?\d+\.?\d*)/);
+    const priceNum = r.price ? parseFloat(String(r.price).replace(/[^0-9.]/g, '')) : null;
+
+    if (pctMatch) {
+      pct = parseFloat(pctMatch[1]);
+    } else if (ptsMatch && priceNum && priceNum > 0) {
+      // Convert raw point change to % (gold price context)
+      const pts = parseFloat(ptsMatch[1]);
+      pct = (pts / (priceNum - pts)) * 100;
+    }
+
+    if (pct === null || isNaN(pct)) {
+      fill.className = 'momentum-fill flat';
+      fill.style.width = '2px';
+      fill.style.right = '';
+      val.className = 'momentum-val flat';
+      val.textContent = '—';
+      sub.textContent = currentLang === 'km' ? 'បើប្រៀបនឹងការបើកវគ្គ' : 'vs. session open';
+      return;
+    }
+
+    const sign = pct >= 0 ? '+' : '';
+    const displayPct = sign + pct.toFixed(2) + '%';
+
+    // Cap visual fill at ±2% → 50% of half-track width
+    const MAX_PCT = 2;
+    const fillPct = Math.min(Math.abs(pct) / MAX_PCT * 50, 50);
+
+    if (pct > 0.05) {
+      fill.className = 'momentum-fill up';
+      fill.style.width = fillPct + '%';
+      fill.style.right = '';
+      val.className = 'momentum-val up';
+    } else if (pct < -0.05) {
+      fill.className = 'momentum-fill down';
+      fill.style.width = fillPct + '%';
+      fill.style.right = '';
+      val.className = 'momentum-val down';
+    } else {
+      fill.className = 'momentum-fill flat';
+      fill.style.width = '2px';
+      fill.style.right = '';
+      val.className = 'momentum-val flat';
+    }
+    val.textContent = displayPct;
+    if (currentLang === 'km') {
+      title.textContent = 'ម៉ូម៉ង់ទំនាក់ទំនងវគ្គ';
+      sub.textContent = 'បើប្រៀបនឹងការបើកវគ្គ (00:00 UTC)';
+    } else {
+      title.textContent = 'Session Momentum';
+      sub.textContent = 'vs. session open (00:00 UTC)';
+    }
+  })();
 
   // Zones
   const zt = document.getElementById('zonesTable');
@@ -1101,26 +1375,29 @@ function renderResult(r) {
 
   // Static section titles (language-aware)
   document.getElementById('zonesTitle').textContent = UI_STRINGS[currentLang].keyZones;
-  document.getElementById('eventsTitle').textContent = UI_STRINGS[currentLang].events;
 
-  // Events
-  const el = document.getElementById('eventsList');
-  el.innerHTML = '';
-  (Array.isArray(r.events) ? r.events : []).forEach(ev => {
-    const impClass = ev.impact === 'high' ? 'impact-high' : 'impact-med';
-    const evNote = currentLang === 'km' ? (ev.note_km || ev.note) : ev.note;
-    el.innerHTML += `
-      <div class="ev-item">
-        <div class="ev-date">${escapeHtml(ev.date)}</div>
-        <div class="ev-info">
-          <div class="ev-name"><span class="ev-impact ${impClass}"></span>${escapeHtml(ev.name)}</div>
-          <div class="ev-note">${escapeHtml(evNote)}</div>
-        </div>
-      </div>`;
-  });
-  if (!el.innerHTML) {
-    el.innerHTML = `<div class="ev-note" style="padding:6px 0;">${escapeHtml(UI_STRINGS[currentLang].noEvents)}</div>`;
-  }
+  // Methodology note — language-aware static text
+  (function renderMethodologyNote() {
+    const titleEl = document.getElementById('methodologyNoteTitle');
+    const bodyEl = document.getElementById('methodologyNoteBody');
+    if (currentLang === 'km') {
+      titleEl.textContent = 'របៀបគណនាការវិភាគនេះ';
+      bodyEl.innerHTML = `
+        <span>ទិសដៅ (ឡើង/ចុះ/អព្យាក្រឹត)</span> — តម្លៃបើប្រៀបនឹងការបើកវគ្គ (00:00 UTC).<br>
+        <span>របារម៉ូម៉ង់</span> — ការប្រែប្រួល % ពីការបើកវគ្គ; ដែនកំណត់ ±2% សម្រាប់ការបង្ហាញ.<br>
+        <span>តំបន់</span> — ការបើក ខ្ពស់ និងទាបក្នុងវគ្គ បូករួមកម្រិតលេខមូល.<br>
+        <span>ការរៀបចំជួញដូរ</span> — ចំណុចចូល ±0.3% នៃតំបន់; ដាក់ខាតនៅខាងក្រៅ; TP ≥ 1:3 RR.<br>
+        <span>សេណារីយ៉ូ Bull/Bear</span> — ចាប់ផ្ដើមនៅពេលបំបែកខ្ពស់/ទាបក្នុងវគ្គ.`;
+    } else {
+      titleEl.textContent = 'How this analysis was calculated';
+      bodyEl.innerHTML = `
+        <span>Direction (UP/DOWN/NEUTRAL)</span> — price vs. session open (00:00 UTC).<br>
+        <span>Momentum bar</span> — % change from session open; capped at ±2% for display scale.<br>
+        <span>Zones</span> — session open, high, and low, plus nearest round-number levels.<br>
+        <span>Trade setup</span> — entry within 0.3% of zone; SL beyond zone; TP at 1:3+ RR.<br>
+        <span>Bull/Bear scenarios</span> — triggered by break of session high or low respectively.`;
+    }
+  })();
 
   // Summary
   const summaryText = currentLang === 'km' ? (r.summary_km || r.summary) : r.summary;
