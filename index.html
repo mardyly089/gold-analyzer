@@ -984,14 +984,21 @@ async function runAnalysis() {
         throw new Error(data.error?.message || ('Request failed (status ' + response.status + ')'));
       }
 
+      console.log('Loop', loopCount, '— stop_reason:', data.stop_reason, 'content types:', (data.content||[]).map(b=>b.type));
+
       // If Claude used a tool (web search), loop: send tool results back
       if (data.stop_reason === 'tool_use') {
         messages.push({ role: 'assistant', content: data.content });
         const toolResults = (data.content || [])
           .filter(b => b.type === 'tool_use')
-          .map(b => ({ type: 'tool_result', tool_use_id: b.id, content: '' }));
+          .map(b => ({ type: 'tool_result', tool_use_id: b.id, content: b.output || '' }));
+        if (toolResults.length === 0) {
+          // No tool_use blocks found despite tool_use stop reason — break to avoid infinite loop
+          finalData = data;
+          break;
+        }
         messages.push({ role: 'user', content: toolResults });
-        continue; // next loop iteration
+        continue;
       }
 
       // Got final text response
@@ -1005,13 +1012,18 @@ async function runAnalysis() {
       throw new Error('No response received after tool loop. Try again.');
     }
 
-    // Extract text from final response
+    // Log full response for debugging
+    console.log('Final API response:', JSON.stringify(finalData).slice(0, 2000));
+
+    // Extract text from final response — skip tool_use and tool_result blocks
     let rawText = '';
     if (Array.isArray(finalData.content)) {
       for (const block of finalData.content) {
         if (block.type === 'text') rawText += block.text;
       }
     }
+
+    console.log('Raw text extracted:', rawText.slice(0, 500));
 
     if (!rawText.trim()) {
       throw new Error('No analysis text came back. Try again in a moment.');
