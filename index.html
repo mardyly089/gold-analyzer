@@ -668,20 +668,13 @@ function clearAllTimers() {
 function buildPrompt() {
   const now = new Date();
   const humanDate = now.toUTCString().slice(0, 16) + ' ' + now.getUTCFullYear();
-  return `You are a professional gold (XAU/USD) market analyst with access to live web search.
+  return `You are a gold (XAU/USD) market analyst with live web search.
 
 Today is ${humanDate} (UTC).
 
-Please search the web for the latest data on these GOLD DIRECTION signals:
-1. Current XAU/USD price and recent movement (include today's session open price if available)
-2. DXY (US Dollar Index) latest level and trend
-3. Fed interest rate expectations / probability of rate hike
-4. VIX fear index current level
-5. Bitcoin price and crypto market sentiment
-6. Geopolitical risks (Middle East, Iran, etc) affecting gold
-7. Gold technical analysis on the 5-minute and 15-minute charts — recent swing highs/lows, nearest intraday support/resistance, and current short-term momentum
+Search the web for: (1) current XAU/USD price and today's % change, (2) DXY trend, (3) any major gold news today.
 
-After searching, respond ONLY with a valid JSON object (no markdown, no backticks, no extra text) in exactly this format:
+Respond ONLY with a valid JSON object — no markdown, no backticks, no extra text:
 
 {
   "price": "4089",
@@ -754,9 +747,7 @@ After searching, respond ONLY with a valid JSON object (no markdown, no backtick
   "summary_km": "សរសេរការវិភាគជាភាសាខ្មែរ 3-4 ប្រយោគ ដោយពន្យល់ពីកត្តាចម្បង អ្វីដែលត្រូវតាមដាន និងហានិភ័យសំខាន់។"
 }
 
-Use the ACTUAL live data you find from web search. Update all prices and values based on real current data. "priceChange" should be the % change from today's session open (00:00 UTC) — format as e.g. "+0.82%" or "-1.14%". direction must be UP, DOWN, or NEUTRAL based on whether current price is above, below, or within 0.1% of session open.
-
-For "tradeSetups": signalNow must be one of "BUY NOW", "SELL NOW", or "WAIT" depending on whether there is a clean immediate edge on the 5m chart right now, or whether it's better to wait for a limit order at a specific level. entryType must be one of "MARKET BUY", "MARKET SELL", "LIMIT BUY", "LIMIT SELL". All "_km" fields must be natural, fluent Khmer (ភាសាខ្មែរ) translations — not transliteration, not machine-literal word-for-word, but how a Khmer-speaking trader would naturally phrase it.`;
+Use ACTUAL live data from your search. "priceChange" = % change from today's open (format: "+0.82%" or "-1.14%"). direction = UP if price above open, DOWN if below, NEUTRAL if within 0.1%. All "_km" fields must be natural fluent Khmer translations. Keep summary to 2-3 sentences max.`;
 }
 
 function cancelAnalysis() {
@@ -812,8 +803,8 @@ function saveApiKey() {
   const btn = document.getElementById('setupSubmit');
   const key = inp.value.trim();
 
-  if (!key.startsWith('sk-ant-')) {
-    errEl.textContent = 'That doesn\'t look like a valid Anthropic key (should start with sk-ant-).';
+  if (!key || key.length < 20) {
+    errEl.textContent = 'Key looks too short — please paste your full Anthropic API key.';
     errEl.className = 'setup-error show';
     return;
   }
@@ -954,7 +945,7 @@ async function runAnalysis() {
   try {
     let finalData = null;
     let loopCount = 0;
-    const MAX_LOOPS = 8;
+    const MAX_LOOPS = 4;
 
     while (loopCount < MAX_LOOPS) {
       loopCount++;
@@ -1021,6 +1012,8 @@ async function runAnalysis() {
         if (block.type === 'text') rawText += block.text;
       }
     }
+
+    if (!rawText.trim()) {
       throw new Error('No analysis text came back. Try again in a moment.');
     }
 
