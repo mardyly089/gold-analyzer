@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gold Live Analyzer</title>
+<style>
+  :root {
+    --gold: #C9952A;
+    --gold-light: #F5C842;
+    --gold-dim: #7A5A12;
+    --bg: #0A0A0B;
+    --bg2: #111113;
+    --bg3: #181A1E;
+    --border: rgba(201,149,42,0.18);
+    --border-bright: rgba(201,149,42,0.45);
+    --text: #E8E6DF;
+    --text2: #8A8780;
+    --text3: #555450;
+    --red: #E05252;
+    --green: #52B788;
+    --amber: #E0A535;
+    --blue: #4A90D9;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  /* ---- HEADER ---- */
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 0.5px solid var(--border);
+    background: var(--bg2);
+  }
+  .logo {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .logo-icon {
+    width: 28px; height: 28px;
+    background: linear-gradient(135deg, #C9952A, #F5C842);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700; color: #000;
+    letter-spacing: -1px;
+  }
+  .logo-name { font-size: 13px; font-weight: 600; color: var(--text); letter-spacing: 0.04em; }
+  .logo-sub { font-size: 10px; color: var(--text2); letter-spacing: 0.08em; text-transform: uppercase; }
+
+  .time-display { font-size: 11px; color: var(--text3); letter-spacing: 0.06em; text-align: right; }
+  .time-display span { display: block; }
+  .top-bar-right { display: flex; align-items: center; gap: 12px; }
+  .lang-toggle {
+    font-size: 10px; padding: 5px 10px; border-radius: 6px;
+    border: 0.5px solid var(--border-bright); background: var(--bg3);
+    color: var(--gold-light); cursor: pointer; font-family: inherit;
+    letter-spacing: 0.04em; white-space: nowrap;
+  }
+  .lang-toggle:hover { border-color: var(--gold); }
+  .lang-toggle.active-km { background: var(--gold); color: #000; border-color: var(--gold); }
+
+  /* ---- INTRO / HELP CARD (first-time guidance) ---- */
+  .intro-card {
+    margin: 16px 20px 0;
+    padding: 13px 15px;
+    border-radius: var(--radius);
+    border: 0.5px solid var(--border);
+    background: var(--bg2);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  .intro-card.hide { display: none; }
+  .intro-title {
+    font-size: 12px; font-weight: 600; color: var(--gold-light);
+    margin-bottom: 5px; letter-spacing: 0.02em;
+  }
+  .intro-text {
+    font-size: 11.5px; color: var(--text2); line-height: 1.6;
+  }
+  .intro-dismiss {
+    display: inline-block; margin-top: 8px; font-size: 10px;
+    color: var(--text3); text-decoration: underline; cursor: pointer;
+    background: none; border: none; font-family: inherit; padding: 0;
+  }
+  .intro-dismiss:hover { color: var(--text2); }
+
+  /* ---- MAIN BUTTON ---- */
+  .center-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 28px 20px 16px;
+  }
+
+  .analyze-btn {
+    position: relative;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    outline: none;
+    padding: 0;
+    transition: transform 0.15s;
+  }
+  .analyze-btn:active { transform: scale(0.97); }
+  .analyze-btn:disabled { cursor: not-allowed; opacity: 0.6; }
+  .analyze-btn:focus-visible .btn-ring { outline: 2px solid var(--gold-light); outline-offset: 3px; }
+
+  .btn-ring {
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, #1e1a0e, #0A0A0B);
+    border: 1.5px solid var(--border-bright);
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    box-shadow: 0 0 0 8px rgba(201,149,42,0.05), 0 0 30px rgba(201,149,42,0.08);
+    transition: box-shadow 0.3s, border-color 0.3s;
+  }
+  .analyze-btn:not(:disabled):hover .btn-ring {
+    box-shadow: 0 0 0 12px rgba(201,149,42,0.08), 0 0 50px rgba(201,149,42,0.18);
+    border-color: var(--gold);
+  }
+  .btn-ring.scanning {
+    animation: pulse-ring 1.2s ease-in-out infinite;
+    border-color: var(--gold);
+  }
+  @keyframes pulse-ring {
+    0%,100% { box-shadow: 0 0 0 8px rgba(201,149,42,0.05), 0 0 30px rgba(201,149,42,0.15); }
+    50% { box-shadow: 0 0 0 18px rgba(201,149,42,0.12), 0 0 60px rgba(201,149,42,0.3); }
+  }
+
+  .btn-inner-icon { font-size: 38px; line-height: 1; user-select: none; }
+  .btn-label {
+    font-size: 11px; color: var(--text2); margin-top: 10px; letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  /* scanning ticker */
+  .scan-ticker {
+    font-size: 10px; color: var(--gold); letter-spacing: 0.08em;
+    margin-top: 6px; min-height: 14px; text-align: center;
+    animation: blink 0.9s step-start infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* cancel link, shown only while scanning */
+  .cancel-link {
+    display: none; margin-top: 10px; font-size: 10px; color: var(--text3);
+    text-decoration: underline; cursor: pointer; background: none; border: none;
+    font-family: inherit; letter-spacing: 0.04em;
+  }
+  .cancel-link.show { display: inline-block; }
+  .cancel-link:hover { color: var(--red); }
+
+  /* ---- STATUS ROW ---- */
+  .status-row {
+    display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+    padding: 0 20px 16px;
+  }
+  .status-pill {
+    font-size: 10px; padding: 3px 10px; border-radius: 20px;
+    border: 0.5px solid var(--border); color: var(--text2);
+    letter-spacing: 0.05em; text-transform: uppercase;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--text3); }
+  .dot.live { background: var(--green); box-shadow: 0 0 6px var(--green); animation: dot-pulse 2s infinite; }
+  @keyframes dot-pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* ---- VERDICT BOX ---- */
+  .verdict-box {
+    margin: 0 20px 16px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border-bright);
+    background: var(--bg2);
+    overflow: hidden;
+    display: none;
+  }
+  .verdict-box.show { display: block; }
+  .verdict-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px; border-bottom: 0.5px solid var(--border);
+  }
+  .verdict-label { font-size: 10px; color: var(--text2); letter-spacing: 0.1em; text-transform: uppercase; }
+  .verdict-time { font-size: 10px; color: var(--text3); }
+  .verdict-main {
+    padding: 16px;
+  }
+  .verdict-direction {
+    display: flex; align-items: center; gap: 14px; margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .dir-badge {
+    padding: 8px 18px; border-radius: 8px; font-size: 15px; font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  .dir-badge.up { background: rgba(82,183,136,0.15); color: var(--green); border: 1px solid rgba(82,183,136,0.3); }
+  .dir-badge.down { background: rgba(224,82,82,0.15); color: var(--red); border: 1px solid rgba(224,82,82,0.3); }
+  .dir-badge.neutral { background: rgba(224,165,53,0.12); color: var(--amber); border: 1px solid rgba(224,165,53,0.3); }
+
+  .dir-meta { font-size: 12px; color: var(--text2); line-height: 1.6; white-space: pre-line; }
+
+  /* score bars */
+  .scores-grid { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+  .score-item { display: flex; align-items: center; gap: 8px; }
+  .score-name { font-size: 10px; color: var(--text2); width: 110px; flex-shrink: 0; text-transform: uppercase; letter-spacing: 0.04em; }
+  .score-track { flex: 1; height: 5px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+  .score-fill { height: 100%; border-radius: 3px; transition: width 1s ease; }
+  .score-num { font-size: 10px; color: var(--text2); width: 24px; text-align: right; }
+
+  /* price table */
+  .price-zones { margin-bottom: 14px; }
+  .zone-title { font-size: 10px; color: var(--text2); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px; }
+  .zone-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 5px 0; border-bottom: 0.5px solid rgba(255,255,255,0.04);
+    font-size: 11px; gap: 8px;
+  }
+  .zone-row:last-child { border-bottom: none; }
+  .zone-name { color: var(--text2); }
+  .zone-price { font-weight: 600; color: var(--text); font-family: monospace; white-space: nowrap; }
+  .zone-tag {
+    font-size: 9px; padding: 1px 6px; border-radius: 4px;
+    text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap;
+  }
+  .tag-r { background: rgba(224,82,82,0.15); color: var(--red); }
+  .tag-g { background: rgba(82,183,136,0.15); color: var(--green); }
+  .tag-a { background: rgba(224,165,53,0.12); color: var(--amber); }
+  .tag-b { background: rgba(74,144,217,0.15); color: var(--blue); }
+
+  /* ---- TRADE SETUP (entry/TP/SL chart + table) ---- */
+  .trade-setup-box { margin-bottom: 14px; }
+  .signal-now {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 10px 12px; border-radius: 8px; margin-bottom: 10px;
+    background: var(--bg3); border: 0.5px solid var(--border);
+  }
+  .signal-badge {
+    font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 6px;
+    letter-spacing: 0.05em; white-space: nowrap;
+  }
+  .signal-badge.buy { background: rgba(82,183,136,0.18); color: var(--green); border: 1px solid rgba(82,183,136,0.35); }
+  .signal-badge.sell { background: rgba(224,82,82,0.18); color: var(--red); border: 1px solid rgba(224,82,82,0.35); }
+  .signal-badge.wait { background: rgba(224,165,53,0.15); color: var(--amber); border: 1px solid rgba(224,165,53,0.35); }
+  .signal-note { font-size: 11px; color: var(--text2); line-height: 1.5; flex: 1; min-width: 140px; }
+
+  .tf-block { margin-bottom: 14px; }
+  .tf-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .tf-label { font-size: 10px; font-weight: 700; color: var(--gold-light); letter-spacing: 0.08em; text-transform: uppercase; }
+  .tf-entrytype { font-size: 9px; padding: 1px 8px; border-radius: 10px; letter-spacing: 0.04em; text-transform: uppercase; }
+  .tf-entrytype.buy { background: rgba(82,183,136,0.15); color: var(--green); }
+  .tf-entrytype.sell { background: rgba(224,82,82,0.15); color: var(--red); }
+
+  .tf-chart-wrap { background: var(--bg3); border-radius: 8px; padding: 10px 12px 6px; margin-bottom: 8px; }
+  .tf-chart-svg text { font-family: inherit; }
+  .tf-note { font-size: 10.5px; color: var(--text2); line-height: 1.5; margin-bottom: 4px; }
+
+  .tf-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .tf-table td { padding: 4px 0; }
+  .tf-table td:first-child { color: var(--text2); width: 70px; }
+  .tf-table td:last-child { color: var(--text); font-family: monospace; font-weight: 600; text-align: right; }
+  .tf-row-sl td:last-child { color: var(--red); }
+  .tf-row-tp1 td:last-child, .tf-row-tp2 td:last-child { color: var(--green); }
+  .tf-row-entry td:last-child { color: var(--gold-light); }
+
+  /* scenarios */
+  .scenarios { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .sc { padding: 10px; border-radius: 8px; background: var(--bg3); }
+  .sc-head { font-size: 11px; font-weight: 600; margin-bottom: 6px; }
+  .sc-head.bear { color: var(--red); }
+  .sc-head.bull { color: var(--green); }
+  .sc-line { display: flex; justify-content: space-between; font-size: 10px; color: var(--text2); margin-bottom: 2px; gap: 6px; }
+  .sc-line span:last-child { color: var(--text); text-align: right; }
+
+  @media (max-width: 380px) {
+    .scenarios { grid-template-columns: 1fr; }
+  }
+
+  /* analysis text */
+  .analysis-text {
+    font-size: 12px; color: var(--text2); line-height: 1.75;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    border-top: 0.5px solid var(--border); padding-top: 12px;
+    white-space: pre-wrap;
+  }
+
+  /* events */
+  .events { margin-bottom: 0; }
+  .ev-item { display: flex; gap: 10px; padding: 6px 0; border-bottom: 0.5px solid rgba(255,255,255,0.04); }
+  .ev-item:last-child { border-bottom: none; }
+  .ev-date { font-size: 10px; color: var(--gold-dim); min-width: 64px; padding-top: 1px; }
+  .ev-info { }
+  .ev-name { font-size: 11px; color: var(--text); }
+  .ev-note { font-size: 10px; color: var(--text2); margin-top: 1px; }
+  .ev-impact { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+  .impact-high { background: var(--red); }
+  .impact-med { background: var(--amber); }
+
+  /* error */
+  .error-box {
+    margin: 0 20px 16px; padding: 14px 16px;
+    border: 0.5px solid rgba(224,82,82,0.3);
+    background: rgba(224,82,82,0.05);
+    border-radius: var(--radius);
+    font-size: 12px; color: var(--red); display: none;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    line-height: 1.6;
+  }
+  .error-box.show { display: block; }
+  .error-box strong { color: var(--text); }
+  .retry-btn {
+    margin-top: 10px; padding: 6px 14px; border-radius: 6px;
+    background: rgba(224,82,82,0.15); border: 0.5px solid rgba(224,82,82,0.4);
+    color: var(--text); font-size: 11px; cursor: pointer; font-family: inherit;
+  }
+  .retry-btn:hover { background: rgba(224,82,82,0.25); }
+
+  /* disclaimer */
+  .disclaimer {
+    text-align: center; font-size: 9px; color: var(--text3);
+    letter-spacing: 0.04em; padding: 8px 20px 20px;
+    font-family: -apple-system, sans-serif;
+    line-height: 1.6;
+  }
+
+  /* loading steps */
+  .loading-steps {
+    margin: 0 20px 14px; display: none;
+    font-size: 10px; color: var(--text3);
+    font-family: -apple-system, sans-serif;
+  }
+  .loading-steps.show { display: block; }
+  .load-step { padding: 3px 0; display: flex; align-items: center; gap: 6px; }
+  .load-step .ls-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--text3); flex-shrink: 0; }
+  .load-step.done .ls-dot { background: var(--green); }
+  .load-step.active .ls-dot { background: var(--gold); animation: dot-pulse 0.8s infinite; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .btn-ring.scanning, .scan-ticker, .dot.live, .load-step.active .ls-dot {
+      animation: none !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="logo">
+    <div class="logo-icon">Au</div>
+    <div>
+      <div class="logo-name">GOLD ANALYZER</div>
+      <div class="logo-sub">XAU/USD · Live Signal</div>
+    </div>
+  </div>
+  <div class="top-bar-right">
+    <button class="lang-toggle" id="langToggle" onclick="toggleLang()" aria-label="Toggle language">EN / ខ្មែរ</button>
+    <div class="time-display">
+      <span id="clock">--:--:-- UTC</span>
+      <span id="datedisp">-- --- ----</span>
+    </div>
+  </div>
+</div>
+
+<div class="intro-card" id="introCard">
+  <div class="intro-title">How this works</div>
+  <div class="intro-text">
+    Tap the button below. It searches the live web for gold prices, the dollar index, Fed rate odds, and other market signals, then summarizes a bullish/bearish read with price levels to watch. It takes about 10–15 seconds. This is an automated read of public market data — not financial advice, and not a guarantee of what gold will actually do.
+  </div>
+  <button class="intro-dismiss" id="introDismiss">Got it, hide this</button>
+</div>
+
+<div class="center-panel">
+  <button class="analyze-btn" id="analyzeBtn" onclick="runAnalysis()" aria-label="Run gold market analysis">
+    <div class="btn-ring" id="btnRing">
+      <span class="btn-inner-icon" id="btnIcon">⚡</span>
+    </div>
+  </button>
+  <div class="btn-label" id="btnLabel">Tap to analyze gold</div>
+  <div class="scan-ticker" id="scanTicker"></div>
+  <button class="cancel-link" id="cancelLink" onclick="cancelAnalysis()">Cancel</button>
+</div>
+
+<div class="status-row" id="statusRow">
+  <div class="status-pill"><div class="dot" id="dotDXY"></div><span>DXY</span></div>
+  <div class="status-pill"><div class="dot" id="dotFED"></div><span>Fed</span></div>
+  <div class="status-pill"><div class="dot" id="dotVIX"></div><span>VIX</span></div>
+  <div class="status-pill"><div class="dot" id="dotBTC"></div><span>BTC</span></div>
+  <div class="status-pill"><div class="dot" id="dotGEO"></div><span>Geo</span></div>
+  <div class="status-pill"><div class="dot" id="dotTECH"></div><span>Tech</span></div>
+</div>
+
+<div class="loading-steps" id="loadingSteps">
+  <div class="load-step" id="ls1"><div class="ls-dot"></div> Searching live gold price & DXY data…</div>
+  <div class="load-step" id="ls2"><div class="ls-dot"></div> Fetching Fed rate expectations & NFP outlook…</div>
+  <div class="load-step" id="ls3"><div class="ls-dot"></div> Scanning BTC / crypto sentiment…</div>
+  <div class="load-step" id="ls4"><div class="ls-dot"></div> Reading geopolitical risk signals…</div>
+  <div class="load-step" id="ls5"><div class="ls-dot"></div> Running technical analysis (H4 structure)…</div>
+  <div class="load-step" id="ls6"><div class="ls-dot"></div> Calculating direction score & price targets…</div>
+</div>
+
+<div class="error-box" id="errorBox"></div>
+
+<div class="verdict-box" id="verdictBox">
+  <div class="verdict-header">
+    <span class="verdict-label">Live Analysis Result</span>
+    <span class="verdict-time" id="resultTime">--</span>
+  </div>
+  <div class="verdict-main">
+
+    <div class="verdict-direction">
+      <div class="dir-badge" id="dirBadge">--</div>
+      <div class="dir-meta" id="dirMeta">Analyzing…</div>
+    </div>
+
+    <div class="scores-grid" id="scoresGrid"></div>
+
+    <div class="price-zones" id="priceZones">
+      <div class="zone-title" id="zonesTitle">Key price zones</div>
+      <div id="zonesTable"></div>
+    </div>
+
+    <div class="trade-setup-box" id="tradeSetupBox">
+      <div class="zone-title" id="tradeSetupTitle" style="margin-bottom:8px">Entry / TP / SL — 5m &amp; 15m</div>
+      <div class="signal-now" id="signalNowBanner"></div>
+      <div id="tradeChart"></div>
+      <div id="tradeTable"></div>
+    </div>
+
+    <div class="scenarios" id="scenariosBox"></div>
+
+    <div class="zone-title" id="eventsTitle" style="margin-bottom:6px">Economic events this week</div>
+    <div class="events" id="eventsList"></div>
+
+    <div class="analysis-text" id="analysisText"></div>
+  </div>
+</div>
+
+<div class="disclaimer">
+  Powered by Claude AI + live web search · Analysis refreshed on each click · Not financial advice · Always use stop losses
+</div>
+
+<script>
+// ---------- Clock ----------
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toUTCString().slice(17,25) + ' UTC';
+  document.getElementById('datedisp').textContent = now.toUTCString().slice(5,16);
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// ---------- Intro card dismiss (persists for this session only) ----------
+(function initIntro() {
+  const introCard = document.getElementById('introCard');
+  const dismissBtn = document.getElementById('introDismiss');
+  let dismissed = false;
+  dismissBtn.addEventListener('click', () => {
+    dismissed = true;
+    introCard.classList.add('hide');
+  });
+})();
+
+// ---------- State ----------
+let isRunning = false;
+let wasManuallyCancelled = false;
+let tickerInterval = null;
+let stepTimeoutIds = [];
+let dotTimeoutIds = [];
+let currentLang = 'en'; // 'en' or 'km'
+let lastResult = null;  // cached last analysis result, so toggling language can re-render without a new request
+
+const UI_STRINGS = {
+  en: {
+    tradeSetupTitle: 'Entry / TP / SL — 5m & 15m',
+    keyZones: 'Key price zones',
+    events: 'Economic events this week',
+    noEvents: 'No major events reported for this period.',
+    entry: 'Entry', stop: 'Stop loss', tp1: 'Target 1', tp2: 'Target 2',
+    buyNow: 'BUY NOW', sellNow: 'SELL NOW', wait: 'WAIT',
+  },
+  km: {
+    tradeSetupTitle: 'ចំណុចចូល / ចំណេញ / ដាក់ខាត — ៥ នាទី & ១៥ នាទី',
+    keyZones: 'តំបន់តម្លៃសំខាន់ៗ',
+    events: 'ព្រឹត្តិការណ៍សេដ្ឋកិច្ចសប្តាហ៍នេះ',
+    noEvents: 'មិនមានព្រឹត្តិការណ៍ធំសម្រាប់រយៈពេលនេះទេ។',
+    entry: 'ចំណុចចូល', stop: 'ដាក់ខាត', tp1: 'គោលដៅទី ១', tp2: 'គោលដៅទី ២',
+    buyNow: 'ទិញឥឡូវនេះ', sellNow: 'លក់ឥឡូវនេះ', wait: 'រង់ចាំ',
+  }
+};
+
+function toggleLang() {
+  currentLang = currentLang === 'en' ? 'km' : 'en';
+  document.getElementById('langToggle').classList.toggle('active-km', currentLang === 'km');
+  if (lastResult) renderResult(lastResult);
+}
+
+function setDot(id, state) {
+  const d = document.getElementById(id);
+  d.classList.toggle('live', state === 'live');
+  if (state === 'amber') d.style.background = '#E0A535';
+  else if (state === 'red') d.style.background = '#E05252';
+  else if (state === 'live') d.style.background = '';
+  else d.style.background = '';
+}
+
+function resetDots() {
+  ['dotDXY','dotFED','dotVIX','dotBTC','dotGEO','dotTECH'].forEach(id => setDot(id, ''));
+}
+
+function setLoadStep(id, state) {
+  const el = document.getElementById(id);
+  if (el) el.className = 'load-step ' + state;
+}
+
+function resetLoadSteps() {
+  ['ls1','ls2','ls3','ls4','ls5','ls6'].forEach(id => setLoadStep(id, ''));
+}
+
+function clearAllTimers() {
+  if (tickerInterval) { clearInterval(tickerInterval); tickerInterval = null; }
+  stepTimeoutIds.forEach(t => clearTimeout(t));
+  dotTimeoutIds.forEach(t => clearTimeout(t));
+  stepTimeoutIds = [];
+  dotTimeoutIds = [];
+}
+
+function buildPrompt() {
+  const now = new Date();
+  const humanDate = now.toUTCString().slice(0, 16) + ' ' + now.getUTCFullYear();
+  return `You are a professional gold (XAU/USD) market analyst with access to live web search.
+
+Today is ${humanDate} (UTC).
+
+Please search the web for the latest data on these GOLD DIRECTION signals:
+1. Current XAU/USD price and recent movement
+2. DXY (US Dollar Index) latest level and trend
+3. Fed interest rate expectations / probability of rate hike
+4. VIX fear index current level
+5. Bitcoin price and crypto market sentiment
+6. Geopolitical risks (Middle East, Iran, etc) affecting gold
+7. Key upcoming economic events this week (NFP, PMI, CPI etc)
+8. Gold technical analysis on the 5-minute and 15-minute charts — recent swing highs/lows, nearest intraday support/resistance, and current short-term momentum
+
+After searching, respond ONLY with a valid JSON object (no markdown, no backticks, no extra text) in exactly this format:
+
+{
+  "price": "4089",
+  "priceChange": "+62",
+  "direction": "DOWN",
+  "directionNote": "Bearish lean — strong dollar and hawkish Fed dominate",
+  "directionNote_km": "ទិសដៅចុះ — ដុល្លារខ្លាំង និង Fed តឹងរ៉ឹង ជាកត្តាគ្រប់គ្រង",
+  "score": 38,
+  "scores": [
+    {"name":"DXY/Dollar","value":25,"color":"#E05252"},
+    {"name":"Fed Rates","value":20,"color":"#E05252"},
+    {"name":"VIX/Fear","value":55,"color":"#E0A535"},
+    {"name":"BTC Sentiment","value":45,"color":"#E0A535"},
+    {"name":"Geopolitical","value":65,"color":"#52B788"},
+    {"name":"Technical H4","value":35,"color":"#E05252"},
+    {"name":"Inflation CPI","value":30,"color":"#E05252"}
+  ],
+  "zones": [
+    {"name":"Major resistance","price":"$4,493–4,540","tag":"R","note":"KEY zone"},
+    {"name":"H4 supply zone","price":"$4,185–4,231","tag":"R","note":"SMA100 cap"},
+    {"name":"Current price","price":"$4,089","tag":"NOW","note":""},
+    {"name":"Key support","price":"$4,074–4,112","tag":"S","note":"Must hold"},
+    {"name":"Demand zone","price":"$3,960–4,000","tag":"S","note":"Buy zone"},
+    {"name":"Bear target","price":"$3,760","tag":"R","note":"If support breaks"}
+  ],
+  "bearScenario": {
+    "prob":"60%",
+    "trigger":"NFP > 100k Thu",
+    "entry":"$4,175–4,185",
+    "stop":"$4,200",
+    "tp1":"$4,028",
+    "tp2":"$3,865",
+    "when":"Mon–Thu"
+  },
+  "bullScenario": {
+    "prob":"40%",
+    "trigger":"NFP < 60k Thu",
+    "entry":"$3,960–4,000",
+    "stop":"$3,820",
+    "tp1":"$4,185–4,231",
+    "tp2":"$4,493",
+    "when":"Thu–Fri"
+  },
+  "events": [
+    {"date":"Mon","name":"PMI Manufacturing","note":"Weak = gold support","note_km":"ខ្សោយ = ល្អសម្រាប់មាស","impact":"high"},
+    {"date":"Tue","name":"JOLTS Job Openings","note":"Labor market gauge","note_km":"ឧបករណ៍វាស់ទីផ្សារការងារ","impact":"med"},
+    {"date":"Wed","name":"ADP + Services PMI","note":"Signals NFP direction","note_km":"ជាសញ្ញាបង្ហាញទិសដៅ NFP","impact":"med"},
+    {"date":"Thu","name":"Non-Farm Payrolls (NFP)","note":"Main gold catalyst this week","note_km":"កត្តាជំរុញមាសសំខាន់សប្តាហ៍នេះ","impact":"high"},
+    {"date":"All week","name":"Iran / Hormuz geopolitical risk","note":"Safe-haven floor for gold","note_km":"ជាគ្រឹះសុវត្ថិភាពសម្រាប់មាស","impact":"med"}
+  ],
+  "tradeSetups": {
+    "signalNow": "WAIT",
+    "signalNowNote": "Price is mid-range on the 5m chart — no clean edge right now, wait for a retest of the levels below.",
+    "signalNowNote_km": "តម្លៃកំពុងនៅកណ្ដាលជួរលើក្រាហ្វ៍ 5 នាទី — មិនទាន់មានចំណុចចូលច្បាស់ទេ សូមរង់ចាំការត្រលប់មកកាន់កម្រិតខាងក្រោម។",
+    "tf5m": {
+      "bias": "DOWN",
+      "entryType": "LIMIT SELL",
+      "entry": "$4,128–4,132",
+      "stop": "$4,142",
+      "tp1": "$4,108",
+      "tp2": "$4,089",
+      "note": "5m structure shows lower highs; place a limit sell on the retest of this zone.",
+      "note_km": "ក្រាហ្វ៍ 5 នាទីបង្ហាញចំណុចកំពូលទាបបន្តិចម្ដងៗ សូមដាក់ Limit Sell នៅពេលតម្លៃត្រលប់មកដល់តំបន់នេះ។"
+    },
+    "tf15m": {
+      "bias": "DOWN",
+      "entryType": "LIMIT SELL",
+      "entry": "$4,135–4,142",
+      "stop": "$4,155",
+      "tp1": "$4,108",
+      "tp2": "$4,074",
+      "note": "15m shows rejection from resistance; favors continuation lower if $4,108 breaks.",
+      "note_km": "ក្រាហ្វ៍ 15 នាទីបង្ហាញការបដិសេធពីតំបន់លក់ ប្រសិនបើតម្លៃ $4,108 ខូច មានឱកាសបន្តចុះទៀត។"
+    }
+  },
+  "summary": "Write 3-4 sentences here with your real analysis based on what you found. Explain the main driver, what to watch, and the key risk.",
+  "summary_km": "សរសេរការវិភាគជាភាសាខ្មែរ 3-4 ប្រយោគ ដោយពន្យល់ពីកត្តាចម្បង អ្វីដែលត្រូវតាមដាន និងហានិភ័យសំខាន់។"
+}
+
+Use the ACTUAL live data you find from web search. Update all prices, dates, and scores based on real current data. The score values (0-100) represent bullish bias: 0=very bearish, 100=very bullish. direction must be UP, DOWN, or NEUTRAL.
+
+For "tradeSetups": signalNow must be one of "BUY NOW", "SELL NOW", or "WAIT" depending on whether there is a clean immediate edge on the 5m chart right now, or whether it's better to wait for a limit order at a specific level. entryType must be one of "MARKET BUY", "MARKET SELL", "LIMIT BUY", "LIMIT SELL". All "_km" fields (including each event's "note_km") must be natural, fluent Khmer (ភាសាខ្មែរ) translations of their English counterpart — not transliteration, not machine-literal word-for-word, but how a Khmer-speaking trader would naturally phrase it. Use real upcoming weekday names/dates for events based on today's actual date.`;
+}
+
+function cancelAnalysis() {
+  // We avoid AbortController/AbortSignal here on purpose: in some
+  // embedded/sandboxed viewing contexts, the signal object can't be
+  // passed through postMessage between frames, which throws
+  // "AbortSignal object could not be cloned." A simple boolean flag
+  // plus Promise.race works everywhere and gives the same cancel
+  // behavior without that risk.
+  wasManuallyCancelled = true;
+}
+
+// ---------------------------------------------------------------
+// IMPORTANT — set this to your own backend URL before publishing.
+// This page calls a small backend you control (see
+// gold-analyzer-worker.js) instead of calling Anthropic directly,
+// because a public page can never safely hold an API key.
+// After deploying the Worker on Cloudflare, paste its URL here:
+// ---------------------------------------------------------------
+const BACKEND_URL = 'https://gold-analyzer.mahivsong.workers.dev/';
+
+let lastRunAt = 0;
+const RUN_COOLDOWN_MS = 20000; // don't allow a brand-new analysis more than once every 20s
+
+async function runAnalysis() {
+  if (isRunning) return;
+
+  const now0 = Date.now();
+  if (now0 - lastRunAt < RUN_COOLDOWN_MS) {
+    const waitSec = Math.ceil((RUN_COOLDOWN_MS - (now0 - lastRunAt)) / 1000);
+    const errorBoxEarly = document.getElementById('errorBox');
+    errorBoxEarly.className = 'error-box show';
+    errorBoxEarly.innerHTML = `<strong>Please wait</strong><br>Each analysis calls a paid API. To avoid running up charges from repeated taps, please wait ${waitSec}s before running another one.`;
+    return;
+  }
+  lastRunAt = now0;
+
+  isRunning = true;
+
+  const btn = document.getElementById('analyzeBtn');
+  const btnRing = document.getElementById('btnRing');
+  const btnIcon = document.getElementById('btnIcon');
+  const btnLabel = document.getElementById('btnLabel');
+  const scanTicker = document.getElementById('scanTicker');
+  const cancelLink = document.getElementById('cancelLink');
+  const loadingSteps = document.getElementById('loadingSteps');
+  const verdictBox = document.getElementById('verdictBox');
+  const errorBox = document.getElementById('errorBox');
+
+  btn.disabled = true;
+  btnRing.classList.add('scanning');
+  btnIcon.textContent = '◎';
+  btnLabel.textContent = 'Scanning live data…';
+  errorBox.className = 'error-box';
+  errorBox.innerHTML = '';
+  verdictBox.className = 'verdict-box';
+  loadingSteps.className = 'loading-steps show';
+  cancelLink.classList.add('show');
+  resetDots();
+  resetLoadSteps();
+
+  const tickers = [
+    'SEARCHING XAU/USD LIVE PRICE…',
+    'FETCHING DXY INDEX…',
+    'READING FED RATE PROBABILITY…',
+    'SCANNING VIX…',
+    'CHECKING BTC SENTIMENT…',
+    'PULLING GEOPOLITICAL SIGNALS…',
+    'RUNNING H4 TECHNICAL SCAN…',
+    'COMPUTING DIRECTION SCORE…',
+  ];
+  let ti = 0;
+  tickerInterval = setInterval(() => {
+    scanTicker.textContent = tickers[ti % tickers.length];
+    ti++;
+  }, 1400);
+
+  // Animate load steps (purely cosmetic — gives a sense of progress while we wait)
+  const stepTimings = [0, 1400, 2800, 4200, 5600, 7000];
+  stepTimings.forEach((t, i) => {
+    stepTimeoutIds.push(setTimeout(() => setLoadStep('ls' + (i+1), 'active'), t));
+    stepTimeoutIds.push(setTimeout(() => setLoadStep('ls' + (i+1), 'done'), t + 1300));
+  });
+
+  const dotTimings = [
+    ['dotDXY', 1500], ['dotFED', 3000], ['dotVIX', 4500],
+    ['dotBTC', 5500], ['dotGEO', 6500], ['dotTECH', 7500]
+  ];
+  dotTimings.forEach(([id, t]) => {
+    dotTimeoutIds.push(setTimeout(() => setDot(id, 'live'), t));
+  });
+
+  wasManuallyCancelled = false;
+  // Safety timeout: don't let the request hang forever.
+  // We use a flag + Promise.race instead of AbortController/AbortSignal
+  // because some embedded/sandboxed viewers can't pass an AbortSignal
+  // across a postMessage boundary ("AbortSignal object could not be
+  // cloned"). This approach works identically in every context.
+  let didTimeOut = false;
+  const timeoutId = setTimeout(() => { didTimeOut = true; }, 60000);
+
+  if (!BACKEND_URL || BACKEND_URL.includes('YOUR-WORKER-NAME')) {
+    clearTimeout(timeoutId);
+    clearAllTimers();
+    scanTicker.textContent = '';
+    cancelLink.classList.remove('show');
+    loadingSteps.className = 'loading-steps';
+    btnRing.classList.remove('scanning');
+    btnIcon.textContent = '⚡';
+    btnLabel.textContent = 'Tap to analyze gold';
+    btn.disabled = false;
+    isRunning = false;
+    resetDots();
+    errorBox.className = 'error-box show';
+    errorBox.innerHTML = `<strong>Not set up yet</strong><br>This page needs a backend URL configured before it can run. See the setup notes in gold-analyzer-worker.js.`;
+    return;
+  }
+
+  try {
+    const fetchPromise = fetch(BACKEND_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: buildPrompt() })
+    });
+
+    // Poll for manual cancellation or timeout while the fetch is in flight.
+    const cancelOrTimeoutPromise = new Promise((_, reject) => {
+      const pollId = setInterval(() => {
+        if (wasManuallyCancelled) {
+          clearInterval(pollId);
+          const err = new Error('Cancelled by user.');
+          err.name = 'AbortError';
+          reject(err);
+        } else if (didTimeOut) {
+          clearInterval(pollId);
+          const err = new Error('Request timed out after 60 seconds with no response from the backend. Check that your Worker is deployed and reachable, and check the Worker logs in Cloudflare.');
+          err.name = 'TimeoutError';
+          reject(err);
+        }
+      }, 200);
+      // Stop polling if the fetch itself settles first (best-effort cleanup)
+      fetchPromise.finally(() => clearInterval(pollId));
+    });
+
+    const response = await Promise.race([fetchPromise, cancelOrTimeoutPromise]);
+
+    clearTimeout(timeoutId);
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error?.message || ('Request failed (status ' + response.status + ')'));
+    }
+
+    // Extract text from response (Claude may use web search first, then reply with text)
+    let rawText = '';
+    if (Array.isArray(data.content)) {
+      for (const block of data.content) {
+        if (block.type === 'text') rawText += block.text;
+      }
+    }
+
+    if (!rawText.trim()) {
+      throw new Error('No analysis text came back. Try again in a moment.');
+    }
+
+    // Parse JSON — strip any accidental code fences first, then grab the {...} block
+    const cleaned = rawText.replace(/```json|```/g, '').trim();
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error('The result wasn\u2019t in the expected format. Tap the button to try again.');
+    }
+
+    let result;
+    try {
+      result = JSON.parse(jsonMatch[0]);
+    } catch (parseErr) {
+      throw new Error('Couldn\u2019t read the analysis result. Tap the button to try again.');
+    }
+
+    clearAllTimers();
+    scanTicker.textContent = '';
+    cancelLink.classList.remove('show');
+    loadingSteps.className = 'loading-steps';
+
+    lastResult = result;
+    renderResult(result);
+
+    btnRing.classList.remove('scanning');
+    btnIcon.textContent = '✓';
+    btnLabel.textContent = 'Analysis complete · Tap to refresh';
+    btn.disabled = false;
+    isRunning = false;
+
+  } catch (err) {
+    clearTimeout(timeoutId);
+    clearAllTimers();
+    scanTicker.textContent = '';
+    cancelLink.classList.remove('show');
+    loadingSteps.className = 'loading-steps';
+    btnRing.classList.remove('scanning');
+    btnIcon.textContent = '⚡';
+    btnLabel.textContent = 'Tap to analyze gold';
+    btn.disabled = false;
+    isRunning = false;
+    resetDots();
+
+    // Log full error detail to the browser console for debugging.
+    console.error('Gold Analyzer request failed:', err);
+
+    const wasCancelled = err.name === 'AbortError';
+    const wasTimeout = err.name === 'TimeoutError';
+    let message;
+    if (wasCancelled) {
+      message = 'Cancelled. Tap the button below to start a new analysis whenever you\u2019re ready.';
+    } else if (wasTimeout) {
+      message = err.message;
+    } else if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
+      message = 'Could not reach the backend at all (network/CORS error). Check: (1) BACKEND_URL is correct and has no typo, (2) the Worker is deployed, (3) you are opening this page over http(s):// — not as a local file — if your browser blocks that. Open the browser console (F12) for the raw error: "' + err.message + '"';
+    } else {
+      message = err.message || 'Something went wrong while analyzing gold.';
+    }
+
+    errorBox.className = 'error-box show';
+    errorBox.innerHTML = `
+      <strong>${wasCancelled ? 'Analysis cancelled' : 'Analysis failed'}</strong><br>
+      ${escapeHtml(message)}
+      <br>
+      <button class="retry-btn" onclick="document.getElementById('errorBox').className='error-box'; runAnalysis();">Try again</button>
+    `;
+  }
+}
+
+function clamp(n, min, max) {
+  n = Number(n);
+  if (isNaN(n)) return min;
+  return Math.max(min, Math.min(max, n));
+}
+
+// Pulls the first plausible number out of a price string like "$4,128–4,132"
+// or "$4,108". For a range, returns the midpoint.
+function parsePriceNum(str) {
+  if (str === null || str === undefined) return null;
+  const matches = String(str).match(/[\d,]+\.?\d*/g);
+  if (!matches || !matches.length) return null;
+  const nums = matches.map(m => parseFloat(m.replace(/,/g, ''))).filter(n => !isNaN(n));
+  if (!nums.length) return null;
+  if (nums.length === 1) return nums[0];
+  return (Math.min(...nums) + Math.max(...nums)) / 2;
+}
+
+function scoreColor(v) {
+  if (v >= 60) return '#52B788';
+  if (v >= 40) return '#E0A535';
+  return '#E05252';
+}
+
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function formatChange(change) {
+  if (change === undefined || change === null || change === '') return '';
+  const str = String(change).trim();
+  // Avoid double "+" if the model already included a sign
+  if (str.startsWith('+') || str.startsWith('-')) return str;
+  return '+' + str;
+}
+
+// Builds a small horizontal "price ladder" SVG showing entry/SL/TP1/TP2
+// as labeled lines on a vertical price axis, scaled to fit all four levels.
+function buildTfChartSvg(tf, labels) {
+  const entryNum = parsePriceNum(tf.entry);
+  const stopNum = parsePriceNum(tf.stop);
+  const tp1Num = parsePriceNum(tf.tp1);
+  const tp2Num = parsePriceNum(tf.tp2);
+
+  const points = [
+    { key: 'sl', val: stopNum, label: labels.stop, cls: 'tf-row-sl', color: 'var(--red)' },
+    { key: 'entry', val: entryNum, label: labels.entry, cls: 'tf-row-entry', color: 'var(--gold-light)' },
+    { key: 'tp1', val: tp1Num, label: labels.tp1, cls: 'tf-row-tp1', color: 'var(--green)' },
+    { key: 'tp2', val: tp2Num, label: labels.tp2, cls: 'tf-row-tp2', color: 'var(--green)' },
+  ].filter(p => p.val !== null && !isNaN(p.val));
+
+  if (points.length < 2) {
+    return ''; // not enough numeric data to chart
+  }
+
+  const vals = points.map(p => p.val);
+  const min = Math.min(...vals);
+  const max = Math.max(...vals);
+  const pad = (max - min) * 0.18 || 1;
+  const lo = min - pad;
+  const hi = max + pad;
+
+  const W = 320, H = 130, leftPad = 8, rightPad = 8, lineStartX = 70, lineEndX = W - rightPad;
+
+  function yFor(v) {
+    const t = (v - lo) / (hi - lo);
+    return H - 14 - t * (H - 28);
+  }
+
+  let svg = `<svg class="tf-chart-svg" viewBox="0 0 ${W} ${H}" width="100%" height="${H}" xmlns="http://www.w3.org/2000/svg">`;
+
+  // sort by value descending for visual top-to-bottom order
+  const sorted = [...points].sort((a, b) => b.val - a.val);
+
+  sorted.forEach(p => {
+    const y = yFor(p.val);
+    svg += `<line x1="${lineStartX}" y1="${y}" x2="${lineEndX}" y2="${y}" stroke="${p.color}" stroke-width="1.4" stroke-dasharray="${p.key === 'entry' ? '0' : '3,3'}" opacity="0.85" />`;
+    svg += `<text x="0" y="${y + 3.5}" font-size="9" fill="${p.color}" font-weight="600">${escapeHtml(p.label)}</text>`;
+    svg += `<text x="${lineEndX}" y="${y - 4}" font-size="9" fill="${p.color}" text-anchor="end" font-family="monospace">${escapeHtml(String(p.val.toLocaleString()))}</text>`;
+  });
+
+  svg += `</svg>`;
+  return svg;
+}
+
+function buildTfTable(tf, labels) {
+  return `
+    <table class="tf-table">
+      <tr class="tf-row-entry"><td>${escapeHtml(labels.entry)}</td><td>${escapeHtml(tf.entry || '—')}</td></tr>
+      <tr class="tf-row-sl"><td>${escapeHtml(labels.stop)}</td><td>${escapeHtml(tf.stop || '—')}</td></tr>
+      <tr class="tf-row-tp1"><td>${escapeHtml(labels.tp1)}</td><td>${escapeHtml(tf.tp1 || '—')}</td></tr>
+      <tr class="tf-row-tp2"><td>${escapeHtml(labels.tp2)}</td><td>${escapeHtml(tf.tp2 || '—')}</td></tr>
+    </table>`;
+}
+
+function renderTradeSetup(r, lang) {
+  const labels = UI_STRINGS[lang];
+  document.getElementById('tradeSetupTitle').textContent = labels.tradeSetupTitle;
+
+  const ts = r.tradeSetups || {};
+  const signalBanner = document.getElementById('signalNowBanner');
+  const chartEl = document.getElementById('tradeChart');
+  const tableEl = document.getElementById('tradeTable');
+
+  if (!ts.tf5m && !ts.tf15m) {
+    signalBanner.innerHTML = '';
+    chartEl.innerHTML = '';
+    tableEl.innerHTML = '';
+    document.getElementById('tradeSetupBox').style.display = 'none';
+    return;
+  }
+  document.getElementById('tradeSetupBox').style.display = '';
+
+  // Signal-now banner
+  const sigRaw = String(ts.signalNow || 'WAIT').toUpperCase();
+  const sigCls = sigRaw.includes('BUY') ? 'buy' : sigRaw.includes('SELL') ? 'sell' : 'wait';
+  const sigText = sigCls === 'buy' ? labels.buyNow : sigCls === 'sell' ? labels.sellNow : labels.wait;
+  const sigNote = lang === 'km' ? (ts.signalNowNote_km || ts.signalNowNote || '') : (ts.signalNowNote || '');
+  signalBanner.innerHTML = `
+    <span class="signal-badge ${sigCls}">${escapeHtml(sigText)}</span>
+    <span class="signal-note">${escapeHtml(sigNote)}</span>`;
+
+  // Chart + table for each timeframe present
+  let chartHtml = '';
+  let tableHtml = '';
+  [['tf5m', '5M'], ['tf15m', '15M']].forEach(([key, tfLabel]) => {
+    const tf = ts[key];
+    if (!tf) return;
+    const entryTypeRaw = String(tf.entryType || '').toUpperCase();
+    const etCls = entryTypeRaw.includes('SELL') ? 'sell' : 'buy';
+    const note = lang === 'km' ? (tf.note_km || tf.note || '') : (tf.note || '');
+    const chartSvg = buildTfChartSvg(tf, labels);
+
+    chartHtml += `
+      <div class="tf-block">
+        <div class="tf-head">
+          <span class="tf-label">${tfLabel}</span>
+          <span class="tf-entrytype ${etCls}">${escapeHtml(tf.entryType || '')}</span>
+        </div>
+        ${chartSvg ? `<div class="tf-chart-wrap">${chartSvg}</div>` : ''}
+        ${note ? `<div class="tf-note">${escapeHtml(note)}</div>` : ''}
+      </div>`;
+
+    tableHtml += `
+      <div class="tf-block">
+        <div class="tf-head"><span class="tf-label">${tfLabel} ${escapeHtml(tf.entryType || '')}</span></div>
+        ${buildTfTable(tf, labels)}
+      </div>`;
+  });
+
+  chartEl.innerHTML = chartHtml;
+  tableEl.innerHTML = tableHtml;
+}
+
+function renderResult(r) {
+  const now = new Date();
+  document.getElementById('resultTime').textContent = now.toUTCString().slice(17,25) + ' UTC';
+
+  // Direction badge
+  const badge = document.getElementById('dirBadge');
+  const dir = String(r.direction || 'NEUTRAL').toUpperCase();
+  badge.className = 'dir-badge ' + (dir === 'UP' ? 'up' : dir === 'DOWN' ? 'down' : 'neutral');
+  const arrow = dir === 'UP' ? '▲ BULLISH' : dir === 'DOWN' ? '▼ BEARISH' : '◆ NEUTRAL';
+  badge.textContent = arrow;
+
+  const scoreVal = r.score !== undefined ? clamp(r.score, 0, 100) : null;
+  const directionNoteText = currentLang === 'km' ? (r.directionNote_km || r.directionNote) : r.directionNote;
+  let metaLine1 = (scoreVal !== null ? `Score: ${scoreVal}/100` : '') +
+    (directionNoteText ? (scoreVal !== null ? ' · ' : '') + escapeHtml(directionNoteText) : '');
+  let metaLine2 = '';
+  if (r.price) {
+    const priceNum = Number(String(r.price).replace(/[^0-9.]/g, ''));
+    const priceDisplay = isNaN(priceNum) ? escapeHtml(r.price) : '$' + priceNum.toLocaleString();
+    const changeDisplay = formatChange(r.priceChange);
+    metaLine2 = priceDisplay + (changeDisplay ? ' (' + escapeHtml(changeDisplay) + ')' : '');
+  }
+  document.getElementById('dirMeta').textContent = [metaLine1, metaLine2].filter(Boolean).join('\n');
+
+  // Scores
+  const sg = document.getElementById('scoresGrid');
+  sg.innerHTML = '';
+  (Array.isArray(r.scores) ? r.scores : []).forEach(s => {
+    const value = clamp(s.value, 0, 100);
+    const color = s.color || scoreColor(value);
+    sg.innerHTML += `
+      <div class="score-item">
+        <div class="score-name">${escapeHtml(s.name)}</div>
+        <div class="score-track"><div class="score-fill" style="width:${value}%;background:${escapeHtml(color)}"></div></div>
+        <div class="score-num" style="color:${escapeHtml(color)}">${value}</div>
+      </div>`;
+  });
+
+  // Zones
+  const zt = document.getElementById('zonesTable');
+  zt.innerHTML = '';
+  (Array.isArray(r.zones) ? r.zones : []).forEach(z => {
+    const tagClass = z.tag === 'R' ? 'tag-r' : z.tag === 'S' ? 'tag-g' : z.tag === 'NOW' ? 'tag-b' : 'tag-a';
+    zt.innerHTML += `
+      <div class="zone-row">
+        <span class="zone-name">${escapeHtml(z.name)}</span>
+        <span class="zone-price">${escapeHtml(z.price)}</span>
+        <span class="zone-tag ${tagClass}">${escapeHtml(z.tag)}${z.note ? ' · ' + escapeHtml(z.note) : ''}</span>
+      </div>`;
+  });
+
+  // Trade setup (signal-now + 5m/15m entry/TP/SL chart + table)
+  renderTradeSetup(r, currentLang);
+
+  // Scenarios
+  const sb = document.getElementById('scenariosBox');
+  const b = r.bearScenario || {};
+  const bull = r.bullScenario || {};
+  sb.innerHTML = `
+    <div class="sc">
+      <div class="sc-head bear">🔴 Bear ${escapeHtml(b.prob || '')}</div>
+      <div class="sc-line"><span>Trigger</span><span>${escapeHtml(b.trigger || '—')}</span></div>
+      <div class="sc-line"><span>Sell entry</span><span>${escapeHtml(b.entry || '—')}</span></div>
+      <div class="sc-line"><span>Stop loss</span><span>${escapeHtml(b.stop || '—')}</span></div>
+      <div class="sc-line"><span>Target 1</span><span>${escapeHtml(b.tp1 || '—')}</span></div>
+      <div class="sc-line"><span>Target 2</span><span>${escapeHtml(b.tp2 || '—')}</span></div>
+      <div class="sc-line"><span>When</span><span>${escapeHtml(b.when || '—')}</span></div>
+    </div>
+    <div class="sc">
+      <div class="sc-head bull">🟢 Bull ${escapeHtml(bull.prob || '')}</div>
+      <div class="sc-line"><span>Trigger</span><span>${escapeHtml(bull.trigger || '—')}</span></div>
+      <div class="sc-line"><span>Buy entry</span><span>${escapeHtml(bull.entry || '—')}</span></div>
+      <div class="sc-line"><span>Stop loss</span><span>${escapeHtml(bull.stop || '—')}</span></div>
+      <div class="sc-line"><span>Target 1</span><span>${escapeHtml(bull.tp1 || '—')}</span></div>
+      <div class="sc-line"><span>Target 2</span><span>${escapeHtml(bull.tp2 || '—')}</span></div>
+      <div class="sc-line"><span>When</span><span>${escapeHtml(bull.when || '—')}</span></div>
+    </div>`;
+
+  // Static section titles (language-aware)
+  document.getElementById('zonesTitle').textContent = UI_STRINGS[currentLang].keyZones;
+  document.getElementById('eventsTitle').textContent = UI_STRINGS[currentLang].events;
+
+  // Events
+  const el = document.getElementById('eventsList');
+  el.innerHTML = '';
+  (Array.isArray(r.events) ? r.events : []).forEach(ev => {
+    const impClass = ev.impact === 'high' ? 'impact-high' : 'impact-med';
+    const evNote = currentLang === 'km' ? (ev.note_km || ev.note) : ev.note;
+    el.innerHTML += `
+      <div class="ev-item">
+        <div class="ev-date">${escapeHtml(ev.date)}</div>
+        <div class="ev-info">
+          <div class="ev-name"><span class="ev-impact ${impClass}"></span>${escapeHtml(ev.name)}</div>
+          <div class="ev-note">${escapeHtml(evNote)}</div>
+        </div>
+      </div>`;
+  });
+  if (!el.innerHTML) {
+    el.innerHTML = `<div class="ev-note" style="padding:6px 0;">${escapeHtml(UI_STRINGS[currentLang].noEvents)}</div>`;
+  }
+
+  // Summary
+  const summaryText = currentLang === 'km' ? (r.summary_km || r.summary) : r.summary;
+  document.getElementById('analysisText').textContent = summaryText || 'No summary was returned.';
+
+  document.getElementById('verdictBox').className = 'verdict-box show';
+
+  // Scroll to result
+  document.getElementById('verdictBox').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+</script>
+</body>
+</html>
